@@ -1,0 +1,14 @@
+Symbol,Name,Exchange,Dividend_Yield,Age,Market_Cap,Industry,Sector,Current_Price,ROE,ROA,Debt_To_Equity,Current_Ratio
+IEP,Icahn Enterprises L.P.,NMS,20.42,37.536986301369865,4936709632,Oil & Gas Refining & Marketing,Energy,9.795,-0.111219995,-0.0044,144.417,1.741
+CSWC,Capital Southwest Corporation,NMS,11.3000005,44.88767123287671,1067228288,Asset Management,Financial Services,22.38,0.10168,0.06983,99.63,99.098
+GOGL,Golden Ocean Group Limited,NMS,11.05,27.983561643835618,1772692864,Marine Shipping,Industrials,8.89,0.11249,0.05407,73.78,1.169
+WBA,"Walgreens Boots Alliance, Inc.",NMS,10.8500004,44.89041095890411,10257496064,Pharmaceutical Retailers,Healthcare,11.87,-0.75969005,0.0058999998,277.898,0.68
+ARLP,"Alliance Resource Partners, L.P.",NMS,9.58,25.46027397260274,3744532736,Thermal Coal,Energy,29.24,0.24607,0.104090005,25.579,2.363
+VOD,Vodafone Group Public Limited Company,NMS,8.7,36.25479452054795,21292275712,Telecom Services,Communication Services,8.37,0.044060003,0.01761,95.375,1.365
+PAA,"Plains All American Pipeline, L.P.",NMS,7.4499995,26.2054794520548,14347810816,Oil & Gas Midstream,Energy,20.39,0.1028,0.03707,60.937,1.006
+WEN,The Wendy's Company,NMS,6.99,44.75342465753425,2914983424,Restaurants,Consumer Cyclical,14.3,0.64339995,0.04338,1577.076,2.099
+NWBI,"Northwest Bancshares, Inc.",NMS,6.0700003,30.23835616438356,1681830528,Banks - Regional,Financial Services,13.19,0.06249,0.00672,0.0,0.0
+PPBI,"Pacific Premier Bancorp, Inc.",NMS,5.41,27.605479452054794,2408148992,Banks - Regional,Financial Services,24.97,-0.00361,-0.00055,0.0,0.0
+UPBD,"Upbound Group, Inc.",NMS,5.2800003,30.02191780821918,1617467136,Software - Application,Technology,29.57,0.13439,0.071279995,247.29,3.507
+COLB,"Columbia Banking System, Inc.",NMS,5.12,32.632876712328766,5858626560,Banks - Regional,Financial Services,27.96,0.09771,0.00932,0.0,0.0
+PEBO,Peoples Bancorp Inc.,NMS,5.11,31.97808219178082,1162218496,Banks - Regional,Financial Services,32.68,0.117180005,0.013730001,0.0,0.0
