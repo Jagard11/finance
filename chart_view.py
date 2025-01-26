@@ -20,7 +20,7 @@ class ChartView:
         path = self.ensure_chart_dir(symbol)
         
         stock = yf.Ticker(symbol)
-        hist = stock.history(period="5y")
+        hist = stock.history(period="max")  # Changed from 5y to max
         
         if hist.empty:
             return None

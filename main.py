@@ -12,15 +12,17 @@ chart_view = ChartView()
 df = table_view.load_data()
 
 if df is not None:
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         min_age = st.number_input("Minimum Age (Years)", value=25.0, step=1.0)
     with col2:
         min_dividend = st.number_input("Minimum Dividend Yield (%)", value=5.0, step=0.1)
     with col3:
         min_market_cap = st.number_input("Minimum Market Cap (Billions $)", value=1.0, step=0.1)
+    with col4:
+        filtered_df = table_view.filter_data(df, min_age, min_dividend, min_market_cap)
+        st.selectbox("Select Stock", options=filtered_df['symbol'].tolist(), key='selected_symbol')
 
-    filtered_df = table_view.filter_data(df, min_age, min_dividend, min_market_cap)
     st.write(f"Found {len(filtered_df)} matching stocks")
 
     tab1, tab2 = st.tabs(["Table", "Charts"])

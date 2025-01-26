@@ -4,7 +4,7 @@ import pandas as pd
 
 class TableView:
     @st.cache_data
-    def load_data(_self):  # Added underscore to ignore self in caching
+    def load_data(_self):
         try:
             df = pd.read_csv('all_stocks.csv', 
                             encoding='cp1252',
@@ -33,12 +33,6 @@ class TableView:
         if not filtered_df.empty:
             display_df = filtered_df.copy()
             display_df['market_cap'] = (display_df['market_cap'] / 1e9).round(2)
-            
-            symbol = st.selectbox(
-                "Select a stock for charts:",
-                options=display_df['symbol'].tolist(),
-                key='selected_symbol'
-            )
             
             st.dataframe(
                 display_df[['symbol', 'name', 'market_cap', 'dividend_yield', 'age_years']],
