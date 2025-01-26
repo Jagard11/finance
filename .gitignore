@@ -1,2 +1,5 @@
-*.pyc
 *.pkl
+
+# ./__pycache__/ files
+__pycache__/
+*.py[cod]
