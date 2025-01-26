@@ -1,3 +1,5 @@
+# dataGetter/dataGetter.py
+
 import requests
 import pandas as pd
 import yfinance as yf
@@ -13,7 +15,11 @@ logger = logging.getLogger(__name__)
 class StockScreener:
     def __init__(self):
         self.output_file = 'all_stocks.csv'
-        self.fieldnames = ['symbol', 'name', 'market_cap', 'dividend_yield', 'age_years', 'timestamp']
+        self.fieldnames = [
+            'symbol', 'name', 'market_cap', 'dividend_yield', 'age_years',
+            'pe_ratio', 'debt_to_equity', 'payout_ratio', 'total_cash',
+            'free_cash_flow', 'free_cash_flow_yield', 'timestamp'
+        ]
         self.processed_symbols = set()
         self._initialize_file()
         self._load_processed_symbols()
@@ -56,8 +62,18 @@ class StockScreener:
                 'market_cap': info.get('marketCap', 0),
                 'dividend_yield': info.get('dividendYield', 0) * 100 if info.get('dividendYield') else 0,
                 'age_years': 0,
+                'pe_ratio': info.get('trailingPE', 0),
+                'debt_to_equity': info.get('debtToEquity', 0),
+                'payout_ratio': info.get('payoutRatio', 0) * 100 if info.get('payoutRatio') else 0,
+                'total_cash': info.get('totalCash', 0),
+                'free_cash_flow': info.get('freeCashflow', 0),
+                'free_cash_flow_yield': 0,
                 'timestamp': datetime.now().isoformat()
             }
+            
+            # Calculate free cash flow yield if market cap is available
+            if stock_data['market_cap'] and stock_data['free_cash_flow']:
+                stock_data['free_cash_flow_yield'] = (stock_data['free_cash_flow'] / stock_data['market_cap']) * 100
             
             if 'firstTradeDateEpochUtc' in info:
                 first_trade = pd.to_datetime(info['firstTradeDateEpochUtc'], unit='s')
