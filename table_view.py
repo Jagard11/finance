@@ -34,16 +34,16 @@ class TableView:
             display_df = filtered_df.copy()
             display_df['market_cap'] = (display_df['market_cap'] / 1e9).round(2)
             
-            selected = st.dataframe(
-                display_df[['symbol', 'name', 'market_cap', 'dividend_yield', 'age_years']],
-                hide_index=True,
-                use_container_width=True
-            )
-            
             symbol = st.selectbox(
                 "Select a stock for charts:",
                 options=display_df['symbol'].tolist(),
                 key='selected_symbol'
+            )
+            
+            st.dataframe(
+                display_df[['symbol', 'name', 'market_cap', 'dividend_yield', 'age_years']],
+                hide_index=True,
+                use_container_width=True
             )
             
             if st.button("Download Results"):
