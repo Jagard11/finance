@@ -13,10 +13,39 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class ChartView:
-    def ensure_chart_dir(self, symbol):
-        path = f"./charts/{symbol}"
-        os.makedirs(path, exist_ok=True)
-        return path
+    def __init__(self):
+        self.cache_dir = "./chart_cache"
+        os.makedirs(self.cache_dir, exist_ok=True)
+
+    def _get_cache_file(self, symbol):
+        return os.path.join(self.cache_dir, f"{symbol}_data.pkl")
+
+    def _is_cache_valid(self, cache_file):
+        if not os.path.exists(cache_file):
+            return False
+        mod_time = datetime.fromtimestamp(os.path.getmtime(cache_file))
+        return datetime.now() - mod_time < timedelta(days=1)
+
+    def _get_stock_data(self, symbol):
+        cache_file = self._get_cache_file(symbol)
+        
+        if self._is_cache_valid(cache_file):
+            logger.info(f"Using cached data for {symbol}")
+            data = pd.read_pickle(cache_file)
+            return data['history'], data['dividends']
+            
+        logger.info(f"Fetching fresh data for {symbol}")
+        stock = yf.Ticker(symbol)
+        history = stock.history(period="max")
+        dividends = stock.dividends
+        
+        data = {
+            'history': history,
+            'dividends': dividends
+        }
+        pd.to_pickle(data, cache_file)
+        
+        return history, dividends
 
     def analyze_dividend_price_impact(self, hist, dividends):
         if dividends.empty:
@@ -56,12 +85,11 @@ class ChartView:
 
     def analyze_dividend_history(self, dividends):
         if dividends.empty:
-            return pd.DataFrame()
+            return pd.DataFrame(), pd.DataFrame(), 0
         
         annual_div = dividends.resample('Y').sum()
         div_changes = annual_div.pct_change() * 100
         
-        # Calculate streak of consecutive dividend payments
         current_streak = 0
         prev_year = None
         
@@ -75,13 +103,9 @@ class ChartView:
         return annual_div, div_changes, current_streak
 
     def generate_price_chart(self, symbol):
-        logger.info(f"Fetching price data for {symbol}")
-        path = self.ensure_chart_dir(symbol)
+        logger.info(f"Getting price data for {symbol}")
         
-        stock = yf.Ticker(symbol)
-        hist = stock.history(period="max")
-        dividends = stock.dividends
-        
+        hist, dividends = self._get_stock_data(symbol)
         if hist.empty:
             return None, hist, dividends
             
@@ -111,7 +135,6 @@ class ChartView:
                               row_heights=[0.6, 0.4],
                               vertical_spacing=0.1)
         
-        # Annual dividend amounts
         fig.add_trace(
             go.Bar(
                 x=annual_div.index.year,
@@ -121,7 +144,6 @@ class ChartView:
             row=1, col=1
         )
         
-        # Year-over-year changes
         fig.add_trace(
             go.Scatter(
                 x=div_changes.index.year,
@@ -158,3 +180,19 @@ class ChartView:
                     st.dataframe(impacts_df, hide_index=True)
                 with col2:
                     st.metric("12-Month Average Price Impact", f"{avg_impact:+.2f}%")
+            
+            div_fig = self.generate_dividend_chart(symbol, hist, dividends)
+            if div_fig:
+                st.plotly_chart(div_fig, use_container_width=True)
+                
+                annual_div, div_changes, streak = self.analyze_dividend_history(dividends)
+                if not annual_div.empty:
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Current Annual Dividend Rate", 
+                                f"${annual_div.iloc[-1]:.2f}")
+                    with col2:
+                        st.metric("5-Year Average Growth",
+                                f"{div_changes.tail(5).mean():.1f}%")
+                    with col3:
+                        st.metric("Consecutive Payment Years", streak)
