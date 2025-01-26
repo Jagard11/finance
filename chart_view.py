@@ -20,32 +20,39 @@ class ChartView:
 
     def analyze_dividend_price_impact(self, hist, dividends):
         if dividends.empty:
-            return pd.DataFrame()
+            return None, pd.DataFrame()
         
         impacts = []
-        for date, amount in dividends.items():
+        one_year_ago = pd.Timestamp.now(tz=dividends.index.tz) - pd.Timedelta(days=365)
+        recent_divs = dividends[dividends.index > one_year_ago]
+        
+        for date, amount in recent_divs.items():
             try:
-                # Get prices around dividend date
-                start_date = date - timedelta(days=5)
-                end_date = date + timedelta(days=5)
-                period_prices = hist.loc[start_date:end_date]['Close']
+                start_date = date - pd.Timedelta(days=1)
+                end_date = date + pd.Timedelta(days=1)
+                period_prices = hist.loc[start_date:end_date]
                 
-                # Calculate price change
-                pre_div_price = period_prices[:date].iloc[-1]
-                post_div_price = period_prices[date:].iloc[0]
-                price_change = ((post_div_price - pre_div_price) / pre_div_price) * 100
-                
-                impacts.append({
-                    'date': date,
-                    'dividend': amount,
-                    'pre_price': pre_div_price,
-                    'post_price': post_div_price,
-                    'price_change': price_change
-                })
+                if not period_prices.empty:
+                    open_price = period_prices['Open'].iloc[0]
+                    close_price = period_prices['Close'].iloc[-1]
+                    price_change = ((close_price - open_price) / open_price) * 100
+                    
+                    impacts.append({
+                        'Date': date.strftime('%Y-%m-%d'),
+                        'Open': f'${open_price:.2f}',
+                        'Close': f'${close_price:.2f}',
+                        'Dividend': f'${amount:.2f}',
+                        'Impact': f'{price_change:+.2f}%'
+                    })
             except Exception as e:
                 logger.error(f"Error analyzing dividend impact for {date}: {e}")
-                
-        return pd.DataFrame(impacts)
+        
+        if impacts:
+            impacts_df = pd.DataFrame(impacts)
+            avg_impact = np.mean([float(x['Impact'].rstrip('%')) for x in impacts])
+            return avg_impact, impacts_df
+        
+        return None, pd.DataFrame()
 
     def analyze_dividend_history(self, dividends):
         if dividends.empty:
@@ -76,64 +83,21 @@ class ChartView:
         dividends = stock.dividends
         
         if hist.empty:
-            return None
+            return None, hist, dividends
             
-        # Create subplot with price and dividend impact
-        fig = sp.make_subplots(rows=2, cols=1, 
-                              row_heights=[0.7, 0.3],
-                              vertical_spacing=0.1)
-                              
-        # Price candlestick chart
-        fig.add_trace(
-            go.Candlestick(
-                x=hist.index,
-                open=hist['Open'],
-                high=hist['High'],
-                low=hist['Low'],
-                close=hist['Close'],
-                name="Price"
-            ),
-            row=1, col=1
-        )
-        
-        # Add dividend markers
-        if not dividends.empty:
-            impacts_df = self.analyze_dividend_price_impact(hist, dividends)
-            if not impacts_df.empty:
-                fig.add_trace(
-                    go.Scatter(
-                        x=impacts_df['date'],
-                        y=impacts_df['pre_price'],
-                        mode='markers',
-                        marker=dict(
-                            symbol='triangle-down',
-                            size=10,
-                            color='orange'
-                        ),
-                        name="Dividend Dates"
-                    ),
-                    row=1, col=1
-                )
-                
-                # Price impact chart
-                fig.add_trace(
-                    go.Bar(
-                        x=impacts_df['date'],
-                        y=impacts_df['price_change'],
-                        name="Price Impact (%)"
-                    ),
-                    row=2, col=1
-                )
+        fig = go.Figure(data=go.Candlestick(
+            x=hist.index,
+            open=hist['Open'],
+            high=hist['High'],
+            low=hist['Low'],
+            close=hist['Close']
+        ))
         
         fig.update_layout(
-            title=f"{symbol} Price History and Dividend Impact",
-            height=800,
-            yaxis=dict(fixedrange=False),
-            yaxis2=dict(fixedrange=False)
+            title=f"{symbol} Price History",
+            height=600,
+            yaxis=dict(fixedrange=False)
         )
-        
-        # Enable zooming for both y-axes
-        fig.update_yaxes(fixedrange=False)
         
         return fig, hist, dividends
 
@@ -185,20 +149,12 @@ class ChartView:
         
         if price_fig:
             st.plotly_chart(price_fig, use_container_width=True)
-        
-        div_fig = self.generate_dividend_chart(symbol, hist, dividends)
-        if div_fig:
-            st.plotly_chart(div_fig, use_container_width=True)
             
-            # Display dividend statistics
-            annual_div, div_changes, streak = self.analyze_dividend_history(dividends)
-            if not annual_div.empty:
-                col1, col2, col3 = st.columns(3)
+            avg_impact, impacts_df = self.analyze_dividend_price_impact(hist, dividends)
+            if not impacts_df.empty:
+                st.write("### Dividend Price Impact Analysis (Last 12 Months)")
+                col1, col2 = st.columns([0.7, 0.3])
                 with col1:
-                    st.metric("Current Annual Dividend Rate", 
-                             f"${annual_div.iloc[-1]:.2f}")
+                    st.dataframe(impacts_df, hide_index=True)
                 with col2:
-                    st.metric("5-Year Average Growth",
-                             f"{div_changes.tail(5).mean():.1f}%")
-                with col3:
-                    st.metric("Consecutive Payment Years", streak)
+                    st.metric("12-Month Average Price Impact", f"{avg_impact:+.2f}%")
