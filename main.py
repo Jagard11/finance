@@ -1,29 +1,15 @@
+# ./main.py
 import streamlit as st
-import pandas as pd
-
-@st.cache_data
-def load_data():
-    try:
-        df = pd.read_csv('all_stocks.csv', 
-                        encoding='cp1252',
-                        on_bad_lines='skip',  # Skip problematic rows
-                        dtype={
-                            'symbol': str,
-                            'name': str,
-                            'market_cap': float,
-                            'dividend_yield': float,
-                            'age_years': float,
-                            'timestamp': str
-                        })
-        return df
-    except Exception as e:
-        st.error(f"Data loading error: {e}")
-        return None
+from table_view import TableView
+from chart_view import ChartView
 
 st.set_page_config(page_title="Stock Filter", layout="wide")
 st.title("Stock Filter")
 
-df = load_data()
+table_view = TableView()
+chart_view = ChartView()
+
+df = table_view.load_data()
 
 if df is not None:
     col1, col2, col3 = st.columns(3)
@@ -34,26 +20,13 @@ if df is not None:
     with col3:
         min_market_cap = st.number_input("Minimum Market Cap (Billions $)", value=1.0, step=0.1)
 
-    filtered_df = df[
-        (df['age_years'] >= min_age) &
-        (df['dividend_yield'] >= min_dividend) &
-        (df['market_cap'] >= min_market_cap * 1_000_000_000)
-    ].copy()
-
+    filtered_df = table_view.filter_data(df, min_age, min_dividend, min_market_cap)
     st.write(f"Found {len(filtered_df)} matching stocks")
 
-    if not filtered_df.empty:
-        display_df = filtered_df.copy()
-        display_df['market_cap'] = (display_df['market_cap'] / 1e9).round(2)
-        st.dataframe(
-            display_df[['symbol', 'name', 'market_cap', 'dividend_yield', 'age_years']],
-            hide_index=True
-        )
-        
-        if st.button("Download Results"):
-            st.download_button(
-                "Download CSV",
-                filtered_df.to_csv(index=False),
-                "filtered_stocks.csv",
-                "text/csv"
-            )
+    tab1, tab2 = st.tabs(["Table", "Charts"])
+    
+    with tab1:
+        table_view.render(filtered_df)
+    
+    with tab2:
+        chart_view.render()
