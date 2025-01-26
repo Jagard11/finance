@@ -15,7 +15,7 @@ if df is not None:
     with st.expander("Basic Filters", expanded=True):
         col1, col2, col3 = st.columns(3)
         with col1:
-            min_age = st.number_input("Minimum Age (Years)", value=25.0, step=1.0)
+            min_age = st.number_input("Minimum Age (Years)", value=18.0, step=1.0)
         with col2:
             min_dividend = st.number_input("Minimum Dividend Yield (%)", value=5.0, step=0.1)
         with col3:
